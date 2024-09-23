@@ -272,6 +272,38 @@ print(my_function(3, 4))
 
             # close the open cache files, so Windows won't error
             del repo_map
+            
+    def test_get_repo_files_not_in_graph(self):
+        repo_files = ["test_file1.py", "test_file2.py"]
+        read_files = ["test_file3.md"]
+        all_files = repo_files + read_files
+
+        with IgnorantTemporaryDirectory() as temp_dir:
+            # Create sample files
+            for file in all_files:
+                file_path = os.path.join(temp_dir, file)
+                with open(file_path, "w") as f:
+                    f.write("def foo(): pass\n")
+
+            io = InputOutput()
+            repo_map = RepoMap(main_model=self.GPT35, root=temp_dir, io=io)
+
+            # Prepare full file paths
+            repo_file_paths = [os.path.join(temp_dir, file) for file in repo_files]
+            read_file_paths = [os.path.join(temp_dir, file) for file in read_files]
+
+            # Get repo map
+            result = repo_map.get_repo_map(read_file_paths, repo_file_paths)
+
+            dump(result)
+
+            # Check if the result contains the expected repo files
+            for repo_file in repo_files:
+                self.assertIn(repo_file, result)
+
+            # Close the open cache files to avoid Windows errors
+            del repo_map
+
 
 
 class TestRepoMapTypescript(unittest.TestCase):
